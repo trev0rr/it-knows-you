@@ -54,6 +54,46 @@ body::before {
   z-index: 40;
 }
 
+/* ---------------- Screen 0: Landing ---------------- */
+
+.landing {
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1.5rem;
+}
+
+.landing-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  animation: question-enter 900ms ease-out both;
+  transition: opacity 600ms ease;
+}
+
+.landing-block.is-leaving {
+  opacity: 0;
+}
+
+.landing-title {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: 2.2rem;
+  letter-spacing: 0.02em;
+  margin: 0 0 1.1rem;
+}
+
+.landing-line {
+  font-family: var(--sans);
+  font-weight: 300;
+  font-size: 0.95rem;
+  letter-spacing: 0.03em;
+  color: #6b665f;
+  margin: 0 0 3.25rem;
+}
+
 /* ---------------- Screen 1: Interview ---------------- */
 
 .interview {
