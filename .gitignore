@@ -1,0 +1,24 @@
+# Dependencies
+node_modules/
+
+# Environment variables (API keys)
+.env
+.env.local
+
+# Generated output
+engine/output/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+.vscode/
+.idea/
+
+# Build output
+dist/
+
+# claude
+claude.md
+AGENTS.md

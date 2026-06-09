@@ -1,0 +1,401 @@
+:root {
+  --bg: #0a0a0a;
+  --bg-threshold: #050505;
+  --ink: #e8e4df;
+  --ink-soft: rgba(232, 228, 223, 0.62);
+  --ink-faint: rgba(232, 228, 223, 0.38);
+  --hairline: rgba(232, 228, 223, 0.12);
+  --hairline-bright: rgba(232, 228, 223, 0.35);
+  --serif: 'EB Garamond', Georgia, serif;
+  --sans: 'DM Sans', sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: rgba(232, 228, 223, 0.18);
+  color: var(--ink);
+}
+
+/* Dim light: darker at the edges, opening slightly at the center. */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse 110% 85% at 50% 42%, transparent 46%, rgba(0, 0, 0, 0.62) 100%);
+  z-index: 10;
+}
+
+/* Film grain — felt, not seen. Sits above everything. */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E");
+  opacity: 0.025;
+  z-index: 40;
+}
+
+/* ---------------- Screen 1: Interview ---------------- */
+
+.interview {
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1.5rem 4rem;
+  transition: background-color 4s linear;
+}
+
+.question-block {
+  width: 100%;
+  max-width: 580px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  animation: question-enter 520ms ease-out both;
+  transition: opacity 460ms ease;
+}
+
+.question-block.is-leaving {
+  opacity: 0;
+}
+
+@keyframes question-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.question {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: clamp(1.6rem, 5.5vw, 2.3rem);
+  line-height: 1.35;
+  letter-spacing: 0.01em;
+  margin: 0 0 1.1rem;
+}
+
+/* The page takes a breath before asking. */
+.question.whisper {
+  font-size: clamp(1.45rem, 5vw, 2.05rem);
+  margin-top: clamp(3rem, 12vh, 7rem);
+}
+
+.subtext {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: clamp(0.95rem, 3vw, 1.05rem);
+  color: var(--ink-faint);
+  line-height: 1.6;
+  margin: 0 0 3rem;
+  max-width: 26rem;
+}
+
+.answer {
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--hairline);
+  border-radius: 0;
+  color: var(--ink);
+  font-family: var(--sans);
+  font-weight: 300;
+  font-size: 1.05rem;
+  line-height: 1.7;
+  padding: 0.25rem 0.1rem 0.85rem;
+  resize: none;
+  outline: none;
+  caret-color: var(--ink-soft);
+  transition: border-color 800ms ease;
+}
+
+.answer:focus {
+  border-bottom-color: var(--hairline-bright);
+}
+
+.controls {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 2.5rem;
+  margin-top: 2.75rem;
+}
+
+.back {
+  background: none;
+  border: none;
+  padding: 0.6rem 0.75rem;
+  font-family: var(--sans);
+  font-weight: 300;
+  font-size: 0.68rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: rgba(232, 228, 223, 0.26);
+  cursor: pointer;
+  transition: color 600ms ease;
+}
+
+.back:not(:disabled):hover,
+.back:not(:disabled):focus-visible {
+  color: var(--ink-soft);
+}
+
+.back-arrow {
+  display: inline-block;
+  margin-right: 0.4em;
+  transition: transform 600ms ease;
+}
+
+.back:not(:disabled):hover .back-arrow {
+  transform: translateX(-4px);
+}
+
+.continue {
+  background: none;
+  border: none;
+  padding: 0.6rem 1rem;
+  font-family: var(--sans);
+  font-weight: 300;
+  font-size: 0.78rem;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  cursor: pointer;
+  transition: color 600ms ease, opacity 600ms ease;
+}
+
+.continue:disabled {
+  opacity: 0.25;
+  cursor: default;
+}
+
+.continue:not(:disabled):hover,
+.continue:not(:disabled):focus-visible {
+  color: var(--ink);
+}
+
+.continue-arrow {
+  display: inline-block;
+  margin-left: 0.4em;
+  transition: transform 600ms ease;
+}
+
+.continue:not(:disabled):hover .continue-arrow {
+  transform: translateX(4px);
+}
+
+.progress-line {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  height: 1px;
+  background: var(--hairline-bright);
+  transition: width 1.5s ease;
+  z-index: 20;
+}
+
+/* ---------------- Screen 2: Threshold ---------------- */
+
+.threshold {
+  position: relative;
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-threshold);
+  animation: threshold-enter 1.2s ease both;
+}
+
+/* The room breathes — a brightness oscillation just below conscious notice. */
+.threshold::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: #fff;
+  opacity: 0;
+  animation: threshold-breathe 4s ease-in-out infinite;
+}
+
+@keyframes threshold-breathe {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 0.006;
+  }
+}
+
+@keyframes threshold-enter {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.threshold-phrase {
+  font-family: var(--serif);
+  font-size: 1.15rem;
+  letter-spacing: 0.18em;
+  color: rgba(232, 228, 223, 0.72);
+  margin: 0;
+  opacity: 0;
+  transition: opacity 1400ms ease-in-out;
+}
+
+.threshold-phrase.is-visible {
+  opacity: 1;
+}
+
+/* ---------------- Screen 3: Story ---------------- */
+
+.story {
+  min-height: 100dvh;
+  padding: clamp(4rem, 12vh, 7rem) 1.5rem 5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* The curtain: the threshold's deeper black lifts slowly,
+   like light coming up in a room. */
+.story::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background: var(--bg-threshold);
+  animation: curtain-lift 2.6s ease 0.1s both;
+  z-index: 5;
+}
+
+@keyframes curtain-lift {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+.story-text {
+  max-width: 600px;
+}
+
+.story-text p {
+  font-family: var(--serif);
+  font-size: 1.15rem;
+  line-height: 1.8;
+  color: var(--ink);
+  margin: 0 0 1.6em;
+  opacity: 0;
+  animation: paragraph-enter 800ms ease both;
+}
+
+@keyframes paragraph-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.share {
+  margin-top: 4rem;
+  text-align: center;
+  opacity: 0;
+  animation: paragraph-enter 1200ms ease both;
+}
+
+.share-line {
+  font-family: var(--sans);
+  font-weight: 300;
+  font-size: 0.85rem;
+  letter-spacing: 0.04em;
+  color: var(--ink-faint);
+  margin: 0 0 1.4rem;
+}
+
+.share-button {
+  background: none;
+  border: 1px solid var(--hairline);
+  color: var(--ink-soft);
+  font-family: var(--sans);
+  font-weight: 300;
+  font-size: 0.75rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  padding: 0.85rem 2.2rem;
+  cursor: pointer;
+  transition: border-color 600ms ease, color 600ms ease;
+}
+
+.share-button:hover,
+.share-button:focus-visible {
+  border-color: var(--hairline-bright);
+  color: var(--ink);
+}
+
+/* ---------------- Reduced motion ---------------- */
+
+/* Opacity fades stay (they aren't vestibular triggers, and the
+   sequential reveal is the experience); spatial movement goes. */
+@media (prefers-reduced-motion: reduce) {
+  @keyframes question-enter {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes paragraph-enter {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  .threshold::after {
+    animation: none;
+  }
+
+  .continue-arrow,
+  .back-arrow {
+    transition: none;
+  }
+}
