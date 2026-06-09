@@ -1,0 +1,20 @@
+{
+  "name": "it-knows-you",
+  "version": "0.1.0",
+  "description": "Personalized horror narrative engine",
+  "type": "module",
+  "scripts": {
+    "test-engine": "node test-harness.js",
+    "test-profile": "node test-harness.js engine/profiles/test-profile-1.json",
+    "dev": "vite app",
+    "build": "vite build app"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.52.0",
+    "dotenv": "^17.3.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.0",
+    "vite": "^6.0.0"
+  }
+}
