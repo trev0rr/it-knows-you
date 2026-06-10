@@ -56,6 +56,28 @@ body::before {
   z-index: 40;
 }
 
+/* Mute glyph — present, never insistent. */
+.mute {
+  position: fixed;
+  top: 1.1rem;
+  right: 1.2rem;
+  z-index: 50;
+  background: none;
+  border: none;
+  padding: 0.5rem;
+  font-family: var(--sans);
+  font-size: 0.9rem;
+  line-height: 1;
+  color: rgba(232, 228, 223, 0.22);
+  cursor: pointer;
+  transition: color 600ms ease;
+}
+
+.mute:hover,
+.mute:focus-visible {
+  color: var(--ink-soft);
+}
+
 /* ---------------- Screen 0: Landing ---------------- */
 
 .landing {

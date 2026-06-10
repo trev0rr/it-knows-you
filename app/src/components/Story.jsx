@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { STORY_PARAGRAPHS } from '../story.js'
+import { cutToSilence } from '../audio.js'
 
 // 800ms fade + 400ms before the next paragraph begins.
 const PARA_STAGGER_S = 1.2
@@ -12,6 +13,13 @@ export default function Story() {
   const copiedTimeoutRef = useRef(null)
 
   useEffect(() => () => clearTimeout(copiedTimeoutRef.current), [])
+
+  // The hard cut: when the first paragraph begins to surface,
+  // the room goes quiet.
+  useEffect(() => {
+    const t = setTimeout(cutToSilence, CURTAIN_S * 1000)
+    return () => clearTimeout(t)
+  }, [])
 
   // One soft pulse, ever, when the final line lands.
   // Android only — iOS Safari doesn't expose vibrate.

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { setThresholdBreathing } from '../audio.js'
 
 const PHRASES = ['Noted.', 'One moment.', 'Almost.']
 const INITIAL_DARKNESS = 2000
@@ -35,6 +36,12 @@ export default function Threshold({ onComplete }) {
       document.removeEventListener('visibilitychange', onVisibility)
       lock?.release().catch(() => {})
     }
+  }, [])
+
+  // The room tone starts breathing while it reads.
+  useEffect(() => {
+    setThresholdBreathing(true)
+    return () => setThresholdBreathing(false)
   }, [])
 
   useEffect(() => {
