@@ -44,7 +44,9 @@ export default function App() {
     <>
       {phase === 'landing' && <Landing onBegin={handleBegin} />}
       {phase === 'interview' && <Interview onComplete={handleInterviewComplete} />}
-      {phase === 'threshold' && <Threshold onComplete={handleThresholdComplete} />}
+      {phase === 'threshold' && (
+        <Threshold profile={profile} onComplete={handleThresholdComplete} />
+      )}
       {phase === 'story' && <Story />}
       {soundLive && (
         <button

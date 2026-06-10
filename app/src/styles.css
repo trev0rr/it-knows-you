@@ -355,6 +355,18 @@ body::before {
   opacity: 1;
 }
 
+/* Their own words, slightly wrong — in the font they typed in. */
+.threshold-phrase.is-fragment {
+  font-family: var(--sans);
+  font-weight: 300;
+  font-size: 0.95rem;
+  letter-spacing: 0.04em;
+  color: rgba(232, 228, 223, 0.55);
+  max-width: 30rem;
+  padding: 0 1.5rem;
+  text-align: center;
+}
+
 /* ---------------- Screen 3: Story ---------------- */
 
 .story {
