@@ -182,6 +182,20 @@ body::before {
   max-width: 26rem;
 }
 
+/* When the interview notices something, the new line surfaces slowly. */
+.subtext.is-noticed {
+  animation: subtext-notice 1400ms ease both;
+}
+
+@keyframes subtext-notice {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 .answer {
   width: 100%;
   background: transparent;

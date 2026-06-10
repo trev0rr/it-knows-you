@@ -3,6 +3,11 @@ import { QUESTIONS } from '../questions.js'
 
 const FADE_MS = 480
 
+// Hesitation detection — one acknowledgment, ever. The restraint is the design.
+const HESITATION_MS = 20000
+const LONG_ANSWER_CHARS = 80
+const DELETED_BELOW_CHARS = 10
+
 // Background gains a trace of violet saturation as the interview deepens —
 // felt more than seen.
 function depthColor(index) {
@@ -14,11 +19,38 @@ export default function Interview({ onComplete }) {
   const [value, setValue] = useState('')
   const [answers, setAnswers] = useState({})
   const [leaving, setLeaving] = useState(false)
+  const [altSubtext, setAltSubtext] = useState(null)
   const textareaRef = useRef(null)
   const timeoutRef = useRef(null)
+  // Transient hesitation tracking — none of this should re-render.
+  const noticedRef = useRef(false) // one-shot: has the interview already spoken?
+  const hesitatedOnRef = useRef(null)
+  const valueRef = useRef('')
+  const maxLenRef = useRef(0)
+  const honestPendingRef = useRef(false)
 
   useEffect(() => {
     textareaRef.current?.focus({ preventScroll: true })
+  }, [index])
+
+  // A long pause before typing — the interview notices, once.
+  useEffect(() => {
+    maxLenRef.current = 0
+    if (honestPendingRef.current) {
+      honestPendingRef.current = false
+      setAltSubtext('You can be honest here.')
+    } else {
+      setAltSubtext(null)
+    }
+    if (noticedRef.current) return
+    const t = setTimeout(() => {
+      if (!noticedRef.current && valueRef.current.trim() === '') {
+        noticedRef.current = true
+        hesitatedOnRef.current = QUESTIONS[index].key
+        setAltSubtext('Take your time.')
+      }
+    }, HESITATION_MS)
+    return () => clearTimeout(t)
   }, [index])
 
   useEffect(() => () => clearTimeout(timeoutRef.current), [])
@@ -49,11 +81,13 @@ export default function Interview({ onComplete }) {
     setLeaving(true)
     timeoutRef.current = setTimeout(() => {
       if (index === QUESTIONS.length - 1) {
-        onComplete(nextAnswers)
+        onComplete(nextAnswers, hesitatedOnRef.current)
       } else {
         setAnswers(nextAnswers)
         setIndex(i => i + 1)
-        setValue(nextAnswers[QUESTIONS[index + 1].key] ?? '')
+        const restored = nextAnswers[QUESTIONS[index + 1].key] ?? ''
+        setValue(restored)
+        valueRef.current = restored
         setLeaving(false)
       }
     }, FADE_MS)
@@ -67,9 +101,28 @@ export default function Interview({ onComplete }) {
     timeoutRef.current = setTimeout(() => {
       setAnswers(draft)
       setIndex(i => i - 1)
-      setValue(draft[QUESTIONS[index - 1].key] ?? '')
+      const restored = draft[QUESTIONS[index - 1].key] ?? ''
+      setValue(restored)
+      valueRef.current = restored
       setLeaving(false)
     }, FADE_MS)
+  }
+
+  function handleChange(e) {
+    const next = e.target.value
+    setValue(next)
+    valueRef.current = next
+    // A long answer wiped away — acknowledged on the NEXT question, once.
+    if (
+      !noticedRef.current &&
+      maxLenRef.current > LONG_ANSWER_CHARS &&
+      next.length < DELETED_BELOW_CHARS
+    ) {
+      noticedRef.current = true
+      hesitatedOnRef.current = q.key
+      honestPendingRef.current = true
+    }
+    if (next.length > maxLenRef.current) maxLenRef.current = next.length
   }
 
   function handleKeyDown(e) {
@@ -86,13 +139,15 @@ export default function Interview({ onComplete }) {
     <main className="interview" style={{ backgroundColor: depthColor(index) }}>
       <div key={index} className={`question-block${leaving ? ' is-leaving' : ''}`}>
         <h1 className={`question${q.whisper ? ' whisper' : ''}`}>{q.question}</h1>
-        <p className="subtext">{q.subtext}</p>
+        <p key={altSubtext ?? 'subtext'} className={`subtext${altSubtext ? ' is-noticed' : ''}`}>
+          {altSubtext ?? q.subtext}
+        </p>
         <textarea
           ref={textareaRef}
           className="answer"
           rows={4}
           value={value}
-          onChange={e => setValue(e.target.value)}
+          onChange={handleChange}
           onKeyDown={handleKeyDown}
           aria-label={q.question}
         />

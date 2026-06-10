@@ -18,8 +18,12 @@ export default function App() {
     setPhase('interview')
   }
 
-  function handleInterviewComplete(answers) {
-    setProfile({ ...answers, time_of_day: captureTimeOfDay() })
+  function handleInterviewComplete(answers, hesitatedOn) {
+    setProfile({
+      ...answers,
+      time_of_day: captureTimeOfDay(),
+      ...(hesitatedOn && { hesitated_on: hesitatedOn }),
+    })
     setPhase('threshold')
   }
 
