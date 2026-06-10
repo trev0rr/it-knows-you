@@ -18,6 +18,8 @@ html,
 body {
   margin: 0;
   padding: 0;
+  /* No pull-to-refresh or scroll-chain bounce tearing the experience. */
+  overscroll-behavior: none;
 }
 
 body {
@@ -97,7 +99,9 @@ body::before {
 /* ---------------- Screen 1: Interview ---------------- */
 
 .interview {
-  min-height: 100dvh;
+  /* --vvh tracks visualViewport so the question re-centers in the
+     visible area when the soft keyboard opens. */
+  min-height: var(--vvh, 100dvh);
   display: flex;
   align-items: center;
   justify-content: center;

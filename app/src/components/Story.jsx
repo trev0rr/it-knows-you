@@ -13,6 +13,14 @@ export default function Story() {
 
   useEffect(() => () => clearTimeout(copiedTimeoutRef.current), [])
 
+  // One soft pulse, ever, when the final line lands.
+  // Android only — iOS Safari doesn't expose vibrate.
+  useEffect(() => {
+    const finalLandsMs = (CURTAIN_S + (STORY_PARAGRAPHS.length - 1) * PARA_STAGGER_S + 0.8) * 1000
+    const t = setTimeout(() => navigator.vibrate?.(15), finalLandsMs)
+    return () => clearTimeout(t)
+  }, [])
+
   const ctaDelay = CURTAIN_S + STORY_PARAGRAPHS.length * PARA_STAGGER_S + 1
 
   async function handleCopy() {

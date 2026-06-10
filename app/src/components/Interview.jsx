@@ -23,6 +23,23 @@ export default function Interview({ onComplete }) {
 
   useEffect(() => () => clearTimeout(timeoutRef.current), [])
 
+  // Track the visual viewport so the question stays centered in the
+  // visible area when the mobile keyboard opens.
+  useEffect(() => {
+    const vv = window.visualViewport
+    if (!vv) return
+    const onResize = () => {
+      document.documentElement.style.setProperty('--vvh', `${vv.height}px`)
+      window.scrollTo(0, 0)
+    }
+    onResize()
+    vv.addEventListener('resize', onResize)
+    return () => {
+      vv.removeEventListener('resize', onResize)
+      document.documentElement.style.removeProperty('--vvh')
+    }
+  }, [])
+
   const q = QUESTIONS[index]
   const canContinue = value.trim().length > 0 && !leaving
 
