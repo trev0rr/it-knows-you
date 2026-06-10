@@ -35,8 +35,8 @@ export async function generateHorror(profile) {
       total_tokens:
         message.usage.input_tokens + message.usage.output_tokens,
       estimated_cost:
-        (message.usage.input_tokens * 0.003 +
-          message.usage.output_tokens * 0.015) /
+        (message.usage.input_tokens * 0.015 +
+          message.usage.output_tokens * 0.075) /
         1000,
     },
     model: message.model,
