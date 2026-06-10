@@ -35,24 +35,30 @@ body {
   color: var(--ink);
 }
 
-/* Dim light: darker at the edges, opening slightly at the center. */
+/* Dim light: darker at the edges, opening slightly at the center.
+   --depth (0..1, set while scrolling the story) tightens it. */
 body::after {
   content: '';
   position: fixed;
   inset: 0;
   pointer-events: none;
-  background: radial-gradient(ellipse 110% 85% at 50% 42%, transparent 46%, rgba(0, 0, 0, 0.62) 100%);
+  background: radial-gradient(
+    ellipse 110% 85% at 50% 42%,
+    transparent calc(46% - var(--depth, 0) * 8%),
+    rgb(0 0 0 / calc(0.62 + var(--depth, 0) * 0.1)) 100%
+  );
   z-index: 10;
 }
 
-/* Film grain — felt, not seen. Sits above everything. */
+/* Film grain — felt, not seen. Sits above everything, and gets a
+   hair coarser as the story deepens. */
 body::before {
   content: '';
   position: fixed;
   inset: 0;
   pointer-events: none;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E");
-  opacity: 0.025;
+  opacity: calc(0.025 + var(--depth, 0) * 0.012);
   z-index: 40;
 }
 
@@ -400,6 +406,7 @@ body::before {
 
 .story-text {
   max-width: 600px;
+  hanging-punctuation: first allow-end;
 }
 
 .story-text p {
@@ -409,7 +416,23 @@ body::before {
   color: var(--ink);
   margin: 0 0 1.6em;
   opacity: 0;
-  animation: paragraph-enter 800ms ease both;
+  transform: translateY(6px);
+  transition: opacity 800ms ease, transform 800ms ease;
+}
+
+.story-text p.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* The door opens: the final lines slowly drift apart. */
+.story-text p.is-final {
+  letter-spacing: 0;
+  transition: opacity 800ms ease, transform 800ms ease, letter-spacing 10s linear 800ms;
+}
+
+.story-text p.is-final.is-visible {
+  letter-spacing: 0.045em;
 }
 
 @keyframes paragraph-enter {
@@ -480,6 +503,15 @@ body::before {
     to {
       opacity: 1;
     }
+  }
+
+  .story-text p {
+    transform: none;
+    transition-property: opacity;
+  }
+
+  .story-text p.is-final {
+    transition-property: opacity, letter-spacing;
   }
 
   .threshold::after {

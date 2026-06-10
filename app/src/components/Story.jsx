@@ -1,19 +1,71 @@
-import { useEffect, useRef, useState } from 'react'
+import { memo, useCallback, useEffect, useRef, useState } from 'react'
 import { cutToSilence } from '../audio.js'
 
-// 800ms fade + 400ms before the next paragraph begins.
-const PARA_STAGGER_S = 1.2
 // First paragraph waits for the curtain (the slow fade from the
 // threshold's darker black) to mostly lift.
 const CURTAIN_S = 1.4
+// Opening cadence for paragraphs already on screen when the story opens.
+const OPENING_STAGGER_MS = 400
+const OPENING_BASE_MS = 1200
+const OPENING_WINDOW_MS = 3000
+// Paragraphs start fading ~300px before they'd enter the viewport, so
+// the reader never catches the story unwritten — but the page always
+// ends in darkness below.
+const REVEAL_MARGIN = '0px 0px 300px 0px'
+
+function typeset(text) {
+  return text
+    .replace(/(\w)'(\w)/g, '$1’$2') // smart apostrophes
+    .replace(/ — /g, ' — ') // hair-spaced em dashes
+}
+
+const Paragraph = memo(function Paragraph({ text, isFinal, nextRevealDelay, onFinalVisible }) {
+  const ref = useRef(null)
+  const [visible, setVisible] = useState(false)
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    let timer = null
+    const observer = new IntersectionObserver(
+      entries => {
+        if (!entries[0].isIntersecting) return
+        observer.disconnect()
+        timer = setTimeout(() => {
+          setVisible(true)
+          if (isFinal) onFinalVisible()
+        }, nextRevealDelay())
+      },
+      { rootMargin: REVEAL_MARGIN }
+    )
+    observer.observe(el)
+    return () => {
+      observer.disconnect()
+      clearTimeout(timer)
+    }
+  }, [isFinal, nextRevealDelay, onFinalVisible])
+
+  return (
+    <p
+      ref={ref}
+      className={`${visible ? 'is-visible' : ''}${isFinal ? ' is-final' : ''}`}
+    >
+      {typeset(text)}
+    </p>
+  )
+})
 
 export default function Story({ paragraphs, done, profile }) {
   const [copied, setCopied] = useState(false)
   const [showShare, setShowShare] = useState(false)
+  const [finalSeen, setFinalSeen] = useState(false)
   const copiedTimeoutRef = useRef(null)
-  // Paragraphs present when the screen opened keep the slow opening
-  // cadence; ones that stream in later surface as they arrive.
-  const initialCountRef = useRef(paragraphs.length)
+  const mountAtRef = useRef(0)
+  const openingCountRef = useRef(0)
+
+  useEffect(() => {
+    mountAtRef.current = performance.now()
+  }, [])
 
   useEffect(() => () => clearTimeout(copiedTimeoutRef.current), [])
 
@@ -24,16 +76,49 @@ export default function Story({ paragraphs, done, profile }) {
     return () => clearTimeout(t)
   }, [])
 
-  // When the stream finishes: one soft pulse (Android only — iOS
-  // Safari doesn't expose vibrate), then the share CTA.
+  // The page darkens as the story does: scroll progress drives the
+  // vignette and grain through the --depth custom property.
   useEffect(() => {
-    if (!done) return
-    const t = setTimeout(() => {
-      navigator.vibrate?.(15)
-      setShowShare(true)
-    }, 2400)
+    let raf = 0
+    const onScroll = () => {
+      if (raf) return
+      raf = requestAnimationFrame(() => {
+        raf = 0
+        const max = document.documentElement.scrollHeight - window.innerHeight
+        const depth = max > 0 ? Math.min(1, window.scrollY / max) : 0
+        document.documentElement.style.setProperty('--depth', depth.toFixed(3))
+      })
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    onScroll()
+    return () => {
+      window.removeEventListener('scroll', onScroll)
+      if (raf) cancelAnimationFrame(raf)
+      document.documentElement.style.removeProperty('--depth')
+    }
+  }, [])
+
+  // Reveals during the opening window keep the slow cadence; once the
+  // reader is scrolling, paragraphs surface as they approach.
+  const nextRevealDelay = useCallback(() => {
+    if (performance.now() - mountAtRef.current > OPENING_WINDOW_MS) return 0
+    const delay = OPENING_BASE_MS + openingCountRef.current * OPENING_STAGGER_MS
+    openingCountRef.current += 1
+    return delay
+  }, [])
+
+  // One soft pulse, ever, when the final line lands (Android only —
+  // iOS Safari doesn't expose vibrate).
+  const handleFinalVisible = useCallback(() => {
+    navigator.vibrate?.(15)
+    setFinalSeen(true)
+  }, [])
+
+  useEffect(() => {
+    if (!finalSeen) return
+    const t = setTimeout(() => setShowShare(true), 2400)
     return () => clearTimeout(t)
-  }, [done])
+  }, [finalSeen])
 
   async function handleCopy() {
     try {
@@ -50,17 +135,13 @@ export default function Story({ paragraphs, done, profile }) {
     <main className="story">
       <article className="story-text">
         {paragraphs.map((paragraph, i) => (
-          <p
+          <Paragraph
             key={i}
-            style={{
-              animationDelay:
-                i < initialCountRef.current
-                  ? `${CURTAIN_S + i * PARA_STAGGER_S}s`
-                  : '0.15s',
-            }}
-          >
-            {paragraph}
-          </p>
+            text={paragraph}
+            isFinal={done && i === paragraphs.length - 1}
+            nextRevealDelay={nextRevealDelay}
+            onFinalVisible={handleFinalVisible}
+          />
         ))}
       </article>
       {showShare && (
