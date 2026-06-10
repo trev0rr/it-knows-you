@@ -1,5 +1,6 @@
 import { memo, useCallback, useEffect, useRef, useState } from 'react'
 import { cutToSilence } from '../audio.js'
+import { composedMessage, sanitizeName } from '../share.js'
 
 // First paragraph waits for the curtain (the slow fade from the
 // threshold's darker black) to mostly lift.
@@ -74,6 +75,7 @@ export default function Story({ paragraphs, done, profile }) {
   const [showShare, setShowShare] = useState(false)
   const [finalSeen, setFinalSeen] = useState(false)
   const [lingering, setLingering] = useState(false)
+  const [recipient, setRecipient] = useState('')
   const copiedTimeoutRef = useRef(null)
   const mountAtRef = useRef(0)
   const openingCountRef = useRef(0)
@@ -146,7 +148,7 @@ export default function Story({ paragraphs, done, profile }) {
 
   async function handleCopy() {
     try {
-      await navigator.clipboard.writeText(window.location.href)
+      await navigator.clipboard.writeText(composedMessage(recipient))
       setCopied(true)
       clearTimeout(copiedTimeoutRef.current)
       copiedTimeoutRef.current = setTimeout(() => setCopied(false), 2400)
@@ -172,8 +174,17 @@ export default function Story({ paragraphs, done, profile }) {
       {showShare && (
         <footer className="share">
           <p className="share-line">Share this with someone. We&rsquo;ll write theirs too.</p>
+          <input
+            type="text"
+            className="share-name"
+            placeholder="Who should it meet next?"
+            value={recipient}
+            onChange={e => setRecipient(e.target.value)}
+            maxLength={24}
+            aria-label="Who should it meet next?"
+          />
           <button type="button" className="share-button" onClick={handleCopy}>
-            {copied ? 'Copied' : 'Copy link'}
+            {copied ? 'Copied' : sanitizeName(recipient) ? 'Copy their link' : 'Copy link'}
           </button>
         </footer>
       )}
