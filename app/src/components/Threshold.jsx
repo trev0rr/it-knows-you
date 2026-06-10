@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { setThresholdBreathing } from '../audio.js'
 import { hauntedFragment } from '../transform.js'
 
@@ -6,12 +6,25 @@ const INITIAL_DARKNESS = 2000
 const FADE = 1400 // matches the CSS opacity transition
 const GAP = 1500
 const FINAL_BEAT = 400
+const POLL_MS = 250
+// How long to sit in darkness after "One moment." before offering
+// a sign of life, if generation is slow.
+const PATIENCE_MS = 30000
 
-// In phase 2, onComplete fires at
-// max(sequence finished, generation promise resolved).
-export default function Threshold({ profile, onComplete }) {
+// Paced by the real generation: "Noted." on request start, the
+// quote-back fragment, then "Almost." gated on ~80% of expected
+// length. Completes at max(minimum sequence, first paragraph ready).
+export default function Threshold({ profile, progress, ready, onComplete }) {
   const [item, setItem] = useState(null)
   const [visible, setVisible] = useState(false)
+
+  // Live values readable from inside the async runner.
+  const progressRef = useRef(progress)
+  progressRef.current = progress
+  const readyRef = useRef(ready)
+  readyRef.current = ready
+  const onCompleteRef = useRef(onComplete)
+  onCompleteRef.current = onComplete
 
   // Keep the screen awake — a phone auto-dimming mid-threshold
   // kills the moment. Graceful no-op where unsupported.
@@ -44,32 +57,59 @@ export default function Threshold({ profile, onComplete }) {
   }, [])
 
   useEffect(() => {
-    // One fragment of their own words, slightly wrong, in the font
-    // they typed in. Once, ever.
-    const fragment = hauntedFragment(profile)
-    const schedule = [
-      { text: 'Noted.', hold: 2000 },
-      ...(fragment ? [{ text: fragment, sans: true, hold: 2600 }] : []),
-      { text: 'One moment.', hold: 2000 },
-      { text: 'Almost.', hold: 2000 },
-    ]
-    const timeouts = []
-    let t = INITIAL_DARKNESS
-    schedule.forEach((entry, i) => {
-      timeouts.push(
-        setTimeout(() => {
-          setItem(entry)
-          setVisible(true)
-        }, t)
-      )
-      t += FADE + entry.hold
-      timeouts.push(setTimeout(() => setVisible(false), t))
-      t += FADE
-      t += i === schedule.length - 1 ? FINAL_BEAT : GAP
-    })
-    timeouts.push(setTimeout(onComplete, t))
-    return () => timeouts.forEach(clearTimeout)
-  }, [onComplete, profile])
+    let cancelled = false
+    const sleep = ms => new Promise(resolve => setTimeout(resolve, ms))
+
+    async function waitFor(condition, timeoutMs = Infinity) {
+      const start = Date.now()
+      while (!cancelled && !condition() && Date.now() - start < timeoutMs) {
+        await sleep(POLL_MS)
+      }
+    }
+
+    async function show(entry, hold) {
+      if (cancelled) return
+      setItem(entry)
+      setVisible(true)
+      await sleep(FADE + hold)
+      if (cancelled) return
+      setVisible(false)
+      await sleep(FADE)
+    }
+
+    async function run() {
+      const fragment = hauntedFragment(profile)
+      await sleep(INITIAL_DARKNESS)
+      await show({ text: 'Noted.' }, 2000)
+      await sleep(GAP)
+      if (fragment) {
+        // Their own words, slightly wrong, in the font they typed in.
+        await show({ text: fragment, sans: true }, 2600)
+        await sleep(GAP)
+      }
+      await show({ text: 'One moment.' }, 2000)
+
+      // Hold in darkness until the story is ~80% written.
+      await waitFor(() => progressRef.current >= 0.8, PATIENCE_MS)
+      if (!cancelled && progressRef.current < 0.8) {
+        await sleep(GAP)
+        await show({ text: 'Still here.' }, 2000)
+        await waitFor(() => progressRef.current >= 0.8, 60000)
+      }
+
+      await sleep(GAP)
+      await show({ text: 'Almost.' }, 2000)
+      // Never open the door before there's something behind it.
+      await waitFor(() => readyRef.current)
+      await sleep(FINAL_BEAT)
+      if (!cancelled) onCompleteRef.current()
+    }
+
+    run()
+    return () => {
+      cancelled = true
+    }
+  }, [profile])
 
   return (
     <main className="threshold">
