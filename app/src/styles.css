@@ -446,6 +446,29 @@ body::before {
   }
 }
 
+/* After the last line, the story recedes slightly... */
+.story-text {
+  transition: opacity 2000ms ease;
+}
+
+.story-text.is-dimmed {
+  opacity: 0.82;
+}
+
+/* ...and the interface speaks. Once. */
+.linger {
+  margin-top: 3.5rem;
+  max-width: 600px;
+  text-align: center;
+  font-family: var(--sans);
+  font-weight: 300;
+  font-size: 0.9rem;
+  letter-spacing: 0.05em;
+  color: var(--ink-soft);
+  opacity: 0;
+  animation: paragraph-enter 2000ms ease both;
+}
+
 .share {
   margin-top: 4rem;
   text-align: center;

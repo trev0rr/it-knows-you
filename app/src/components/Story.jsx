@@ -12,6 +12,20 @@ const OPENING_WINDOW_MS = 3000
 // the reader never catches the story unwritten — but the page always
 // ends in darkness below.
 const REVEAL_MARGIN = '0px 0px 300px 0px'
+// After the final line: nothing, for a full five seconds. Then the
+// interface speaks once. Then the share CTA.
+const LINGER_WAIT_MS = 5000
+const SHARE_AFTER_LINGER_MS = 3500
+
+// The interface's voice, not the narrator's — built from their answers.
+function lingerLine(profile) {
+  if (profile?.current_space) {
+    return 'The thing you noticed earlier — is it still where it was?'
+  }
+  const label = profile?.time_of_day?.split(' (')[0]
+  if (label) return `It’s still ${label} where you are.`
+  return 'It has your answers now.'
+}
 
 function typeset(text) {
   return text
@@ -59,6 +73,7 @@ export default function Story({ paragraphs, done, profile }) {
   const [copied, setCopied] = useState(false)
   const [showShare, setShowShare] = useState(false)
   const [finalSeen, setFinalSeen] = useState(false)
+  const [lingering, setLingering] = useState(false)
   const copiedTimeoutRef = useRef(null)
   const mountAtRef = useRef(0)
   const openingCountRef = useRef(0)
@@ -114,10 +129,19 @@ export default function Story({ paragraphs, done, profile }) {
     setFinalSeen(true)
   }, [])
 
+  // Final line lands → five seconds of nothing → the story dims and
+  // the interface speaks → then, and only then, the share CTA.
   useEffect(() => {
     if (!finalSeen) return
-    const t = setTimeout(() => setShowShare(true), 2400)
-    return () => clearTimeout(t)
+    const lingerTimer = setTimeout(() => setLingering(true), LINGER_WAIT_MS)
+    const shareTimer = setTimeout(
+      () => setShowShare(true),
+      LINGER_WAIT_MS + SHARE_AFTER_LINGER_MS
+    )
+    return () => {
+      clearTimeout(lingerTimer)
+      clearTimeout(shareTimer)
+    }
   }, [finalSeen])
 
   async function handleCopy() {
@@ -133,7 +157,7 @@ export default function Story({ paragraphs, done, profile }) {
 
   return (
     <main className="story">
-      <article className="story-text">
+      <article className={`story-text${lingering ? ' is-dimmed' : ''}`}>
         {paragraphs.map((paragraph, i) => (
           <Paragraph
             key={i}
@@ -144,6 +168,7 @@ export default function Story({ paragraphs, done, profile }) {
           />
         ))}
       </article>
+      {lingering && <p className="linger">{lingerLine(profile)}</p>}
       {showShare && (
         <footer className="share">
           <p className="share-line">Share this with someone. We&rsquo;ll write theirs too.</p>
