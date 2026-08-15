@@ -34,10 +34,11 @@ export async function generateHorror(profile) {
       output_tokens: message.usage.output_tokens,
       total_tokens:
         message.usage.input_tokens + message.usage.output_tokens,
+      // claude-opus-4-6 list price: $5 / $25 per million tokens.
       estimated_cost:
-        (message.usage.input_tokens * 0.015 +
-          message.usage.output_tokens * 0.075) /
-        1000,
+        (message.usage.input_tokens * 5 +
+          message.usage.output_tokens * 25) /
+        1_000_000,
     },
     model: message.model,
     timestamp: new Date().toISOString(),

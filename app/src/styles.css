@@ -317,6 +317,13 @@ body::before {
   animation: threshold-enter 1.2s ease both;
 }
 
+/* The failure state reuses the threshold's staging, but it has two children
+   rather than one, so it stacks them. */
+.threshold.is-failure {
+  flex-direction: column;
+  gap: 3rem;
+}
+
 /* The room breathes — a brightness oscillation just below conscious notice. */
 .threshold::after {
   content: '';

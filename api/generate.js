@@ -5,7 +5,9 @@ import Anthropic from '@anthropic-ai/sdk'
 import { readFileSync } from 'fs'
 import { join } from 'path'
 
-const FIELDS = [
+// Exported so the smoke tests can assert the interview/API field contract.
+// Vercel only consumes the default export.
+export const FIELDS = [
   'dream',
   'childhood_space',
   'unsettling_sound',

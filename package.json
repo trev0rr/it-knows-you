@@ -4,6 +4,7 @@
   "description": "Personalized horror narrative engine",
   "type": "module",
   "scripts": {
+    "test": "node --test \"test/**/*.test.js\"",
     "test-engine": "node test-harness.js",
     "test-profile": "node test-harness.js engine/profiles/test-profile-1.json",
     "dev": "vite app",
