@@ -3,6 +3,7 @@ import Landing from './components/Landing.jsx'
 import Interview from './components/Interview.jsx'
 import Threshold from './components/Threshold.jsx'
 import Story from './components/Story.jsx'
+import Failure from './components/Failure.jsx'
 import { captureTimeOfDay } from './questions.js'
 import { startAudio, setMuted, isLive } from './audio.js'
 import { streamStory, simulateStream } from './generation.js'
@@ -27,6 +28,7 @@ export default function App() {
   const [storyParas, setStoryParas] = useState([])
   const [storyDone, setStoryDone] = useState(false)
   const [charCount, setCharCount] = useState(0)
+  const [failed, setFailed] = useState(false)
   const bufferRef = useRef('')
   const receivedRef = useRef(false)
   const cancelGenRef = useRef(null)
@@ -52,8 +54,14 @@ export default function App() {
           handlers.onDone()
           return
         }
-        // API unreachable (local dev, outage): same code path, sample story.
-        cancelGenRef.current = simulateStream(SAMPLE_PARAGRAPHS, handlers)
+        if (import.meta.env.DEV) {
+          // No backend in local dev: same code path, sample story.
+          cancelGenRef.current = simulateStream(SAMPLE_PARAGRAPHS, handlers)
+          return
+        }
+        // In production the sample is someone else's childhood. Serving it as
+        // if it were theirs is the one lie this thing can't tell.
+        setFailed(true)
       },
     }
     cancelGenRef.current = streamStory(profileData, handlers)
@@ -80,6 +88,18 @@ export default function App() {
     setPhase('story')
   }
 
+  // Their answers are still in state — retry the generation, not the interview.
+  function handleRetry() {
+    bufferRef.current = ''
+    receivedRef.current = false
+    setStoryParas([])
+    setStoryDone(false)
+    setCharCount(0)
+    setFailed(false)
+    setPhase('threshold')
+    beginGeneration(profile)
+  }
+
   function handleToggleMute() {
     setMutedState(m => {
       setMuted(!m)
@@ -98,12 +118,16 @@ export default function App() {
           profile={profile}
           progress={Math.min(1, charCount / EXPECTED_CHARS)}
           ready={storyParas.length > 0}
+          failed={failed}
           onComplete={handleThresholdComplete}
         />
       )}
-      {phase === 'story' && (
-        <Story paragraphs={storyParas} done={storyDone} profile={profile} />
-      )}
+      {phase === 'story' &&
+        (failed ? (
+          <Failure onRetry={handleRetry} />
+        ) : (
+          <Story paragraphs={storyParas} done={storyDone} profile={profile} />
+        ))}
       {soundLive && (
         <button
           type="button"

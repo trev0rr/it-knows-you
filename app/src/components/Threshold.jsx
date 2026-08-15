@@ -14,7 +14,7 @@ const PATIENCE_MS = 30000
 // Paced by the real generation: "Noted." on request start, the
 // quote-back fragment, then "Almost." gated on ~80% of expected
 // length. Completes at max(minimum sequence, first paragraph ready).
-export default function Threshold({ profile, progress, ready, onComplete }) {
+export default function Threshold({ profile, progress, ready, failed, onComplete }) {
   const [item, setItem] = useState(null)
   const [visible, setVisible] = useState(false)
 
@@ -23,6 +23,8 @@ export default function Threshold({ profile, progress, ready, onComplete }) {
   progressRef.current = progress
   const readyRef = useRef(ready)
   readyRef.current = ready
+  const failedRef = useRef(failed)
+  failedRef.current = failed
   const onCompleteRef = useRef(onComplete)
   onCompleteRef.current = onComplete
 
@@ -89,18 +91,22 @@ export default function Threshold({ profile, progress, ready, onComplete }) {
       }
       await show({ text: 'One moment.' }, 2000)
 
-      // Hold in darkness until the story is ~80% written.
-      await waitFor(() => progressRef.current >= 0.8, PATIENCE_MS)
-      if (!cancelled && progressRef.current < 0.8) {
+      // Hold in darkness until the story is ~80% written. A failed
+      // generation releases every wait — there is nothing left to wait for.
+      const written = () => progressRef.current >= 0.8 || failedRef.current
+      await waitFor(written, PATIENCE_MS)
+      if (!cancelled && !written()) {
         await sleep(GAP)
         await show({ text: 'Still here.' }, 2000)
-        await waitFor(() => progressRef.current >= 0.8, 60000)
+        await waitFor(written, 60000)
       }
 
-      await sleep(GAP)
-      await show({ text: 'Almost.' }, 2000)
+      if (!failedRef.current) {
+        await sleep(GAP)
+        await show({ text: 'Almost.' }, 2000)
+      }
       // Never open the door before there's something behind it.
-      await waitFor(() => readyRef.current)
+      await waitFor(() => readyRef.current || failedRef.current)
       await sleep(FINAL_BEAT)
       if (!cancelled) onCompleteRef.current()
     }
