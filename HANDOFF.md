@@ -44,6 +44,7 @@ sends and what the system prompt is told to expect. That seam had drifted:
 | `1fe025a` | Teach the prompt what `hesitated_on` means; fix two drifted `<definition_of_done>` assertions |
 | `ddd30e6` | Correct the cost estimate to $5/$25, rewritten as per-million |
 | `69bbe1f` | 18 smoke tests on `node --test`, no new dependencies |
+| `a870d36` | Gate the sample-story fallback to dev; in-voice failure state + retry for production |
 
 `npm test` passes 18/18. `npm run build` is clean. The prompt diff is five
 hunks — I did not rewrite it.
@@ -78,45 +79,61 @@ the suite restores clean. They aren't vacuous.
   `isMuted()` is exported and unused; `app/src/story.js` still carries a stale
   "Phase 2 replaces this" comment. All harmless, and touching them means churn in
   files the history shows were carefully worked.
+- **The threshold's 20.4s on the failure path.** A reader hitting an outage sits
+  through the full ceremony (minus "Almost.") before the door opens on nothing.
+  I could have short-circuited it, and chose not to: the ceremony is the product,
+  and cutting to an error screen in two seconds would feel like a dialog box.
+  Debatable, easy to change in `Threshold.jsx`.
 - **No README.** You said don't scaffold, so I didn't. `STATE.md` covers the
   orientation a README would.
 - **No re-score of the prompt.** No API key in this environment — see decision 1.
 
 ---
 
-## Decisions that need you
+## Calls I made
 
-**1. Does the prompt need a scored run before this merges?**
-`iteration-log.md` scores Run 001 at 4/10, writes the v2 fixes, and stops. There
-is no Run 002 — the v2 prompt shipped but was never re-scored, and my changes are
-also unscored because I had no API key here. Everything I changed is structural
-(a placeholder that was never substituted, a field that was never described), so
-it should be strictly additive. But "should be" isn't "is." If you want this
-verified before merge, `npm run test-engine engine/profiles/test-profile-1.json`
-against both profiles and a Run 002 entry in the log would close the loop the
-history left open — and would tell you whether the v2 prompt actually moved off
-4/10, which is currently unknown.
+You asked for best judgement rather than a list of questions, so these are
+decided rather than open. Each is cheap to reverse and I've said how.
 
-**2. Is the hesitation rule pointed the right way?**
-I made the hesitated-on answer the story's blind spot — the thing it circles and
-never lands on. The opposite reading is just as defensible: the thing they
-stalled on is the thing the story should *drive at*, the sharpest available
-material. I chose restraint on Carpenter grounds and because it doesn't fight
-the ending rule. If you want the other reading it's a one-paragraph swap in
-`engine/prompt.md` — but they can't both be true, and the difference will show up
-in every story where hesitation fires.
+**1. The outage fallback is fixed, not flagged.** (`a870d36`)
+This was the one I'd left as "a product call, not a bug." Handing a reader a
+story about a stranger's grandmother, while the product's entire claim is that it
+knows *theirs*, is the one lie this thing can't tell — and the share links made
+it the failure most likely to be seen by someone you sent a link to. The sample
+is now gated to `import.meta.env.DEV`, and production gets a failure state staged
+like the threshold: `It couldn't hold you.` and a single **Again**, which re-runs
+generation against the answers already in state rather than replaying the
+interview. Because Vite resolves `import.meta.env.DEV` statically, the sample
+story is now tree-shaken out of the production bundle entirely — not gated,
+absent. To reverse: drop the `DEV` check in `App.jsx`.
 
-**3. Should an API outage really serve someone else's story?**
-`App.jsx` falls back to `STORY_PARAGRAPHS` whenever the stream produces nothing —
-missing key, 500, rate limit, cold start. That sample is Miriam's story, built
-from `test-profile-2`: a stranger's grandmother, a stranger's Albuquerque
-apartment. In dev that's the right call. In production it means an outage
-silently hands the reader a story about someone else's childhood while the whole
-premise is *It Knows You*. Given the share links are now live, that's the failure
-mode most likely to be seen by someone you sent a link to. Options: keep it,
-gate it to `import.meta.env.DEV`, or write a short in-voice failure state ("It
-couldn't hold you. Come back."). I didn't touch this because it's a product
-call, not a bug.
+**2. The hesitation rule stays pointed at withholding.** I kept my original call,
+but the Carpenter argument I gave for it was the weaker one. The real reason is
+that the signal is noisy: `hesitated_on` fires on a 20-second pause *or* a long
+answer deleted below 10 characters, and a 20-second pause might mean "this is the
+thing I don't say out loud" or it might mean someone got a text. Withholding
+degrades gracefully when the signal is wrong — a peripheral detail is just
+texture. Driving the story's climax at a false positive makes the whole story
+about the wrong thing. Restraint is the robust choice here, not just the tasteful
+one. To reverse: one paragraph in `engine/prompt.md`.
+
+**3. A scored run should not block this merge.** Worth being precise about the
+ordering: scoring the prompt *before* this merges would score a prompt with an
+unsubstituted placeholder in it. The structural fixes should land first, and then
+Run 002 measures the thing you actually intended to ship. Merge, then score.
+
+**4. I did not subscribe to the PR.** There's no CI in the repo and no other
+reviewers, so there'd be nothing to wake on. Say the word if you want it watched.
+
+## The one thing I could not do
+
+**Score the prompt.** No API key in this session, so no generation ran. Everything
+I changed to `engine/prompt.md` is structural rather than stylistic, and the
+tests pin the contract — but no story has been generated through the corrected
+prompt, by me or by anyone. `npm run test-engine` against both profiles plus a
+Run 002 entry closes the loop `iteration-log.md` opened in March, and would also
+answer the question nobody has answered yet: whether the v2 prompt ever moved off
+4/10.
 
 ---
 
