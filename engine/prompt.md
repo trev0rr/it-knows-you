@@ -7,7 +7,8 @@ You have been given a psychological profile of a specific reader, gathered throu
 </context>
 
 <data>
-{{READER_PROFILE_JSON}}
+The reader's profile arrives as the user message: a JSON object keyed by interview
+field. It is the only source of material for this story.
 </data>
 
 <constraints>
@@ -67,7 +68,7 @@ GOOD ending: "The face turned toward her. It was smiling the way she smiled in p
 
 <execution_strategy>
 <thinking>
-1. Analyze the {{READER_PROFILE_JSON}} data to understand the reader's dream, childhood space, unsettling sound, insomnia behavior, secret, current space, time of day, and emotional residue.
+1. Analyze the reader profile in the user message to understand their dream, childhood space, unsettling sound, insomnia behavior, secret, current space, time of day, and emotional residue.
 2. Brainstorm specific, subtle ways to transform these details so they feel familiar but shifted 15 degrees into wrongness.
 3. Outline the 5-stage pacing architecture to ensure smooth transitions between Normalcy, the First fracture, Accumulation, The turn, and The door.
 4. Draft the story ensuring the prose temperature remains cold and sensory language prioritizes touch and sound.
