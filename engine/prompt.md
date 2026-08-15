@@ -32,6 +32,7 @@ GOOD: "Her hand remembered a texture before her mind could name it — something
 The principle: the reader should RECOGNIZE their input but never be able to point at a sentence and say 'that's exactly what I wrote.' Transformation creates the uncanny. Reproduction creates a parlor trick.
 
 - Calibrate the intensity to the profile (e.g., echo heavy secrets at a distance, write about absence if the emotional residue is grief).
+- If the profile contains `hesitated_on`, it names the one question the reader stalled on — the answer they paused a long time before giving, or wrote out and deleted. Give that material less space than the rest, not more. Let the transformed version of that field surface twice, briefly, at the edge of a scene, and never let the protagonist turn to look at it directly. It is the one thing the story does not explain.
 - Present the protagonist's experience through behavior, sensation, and environment — never through named emotions or emotional interpretation.
 
 BAD: "She felt afraid." / "Terror gripped her." / "Every instinct screamed danger."
@@ -80,10 +81,10 @@ Write a deeply unsettling, highly personalized 1500-2000 word short horror narra
 </task>
 
 <definition_of_done>
-✓ Story is exactly 1500-2000 words.
+✓ Story is between 1500 and 2000 words.
 ✓ Written exclusively in close third person.
 ✓ Begins directly with the story text (no titles or preambles).
-✓ All 8 profile details are transformed and seamlessly woven into the narrative.
+✓ Every field present in the profile is transformed and seamlessly woven into the narrative.
 ✓ Ends on an unresolved, lingering image without explaining the horror.
 ✓ Contains zero jump scares, gore, clichés, or fourth-wall breaks.
 </definition_of_done>
